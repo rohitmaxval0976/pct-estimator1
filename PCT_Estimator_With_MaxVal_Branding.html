@@ -1,1 +1,100 @@
-<html><head><title>PCT Estimator</title></head><body><h1>PCT Estimator Tool</h1></body></html>
+
+<!DOCTYPE html>
+<html>
+<head>
+  <title>PCT National Phase Estimator</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 40px;
+    }
+    h1 {
+      color: #0A284B;
+    }
+    .container {
+      max-width: 1000px;
+      margin: auto;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 30px;
+    }
+    table, th, td {
+      border: 1px solid #ccc;
+    }
+    th, td {
+      padding: 12px;
+      text-align: center;
+    }
+    .btn {
+      padding: 10px 20px;
+      background-color: #0A284B;
+      color: white;
+      border: none;
+      margin-top: 20px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <img src="https://www.maxval.com/wp-content/uploads/2023/02/MaxVal-logo.png" alt="MaxVal Logo" height="60">
+    <h1>PCT National Phase Estimator</h1>
+
+    <label>PCT Application Number: <input type="text" id="pctNumber"></label><br><br>
+    <label>Claim Count: <input type="number" id="claimCount"></label><br><br>
+    <label>Page Count: <input type="number" id="pageCount"></label><br><br>
+    <label>Select Country:
+      <select id="countrySelect">
+        <option>United States</option>
+        <option>China</option>
+        <option>India</option>
+        <option>Japan</option>
+      </select>
+    </label><br><br>
+
+    <button class="btn" onclick="estimateCost()">Estimate Cost</button>
+
+    <table id="resultsTable" style="display:none;">
+      <thead>
+        <tr><th>Country</th><th>Filing Fee</th><th>Extra Claims</th><th>Extra Pages</th><th>Translation</th><th>Service Fee</th><th>Total</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <script>
+    function estimateCost() {
+      let pct = document.getElementById('pctNumber').value.trim();
+      let claims = parseInt(document.getElementById('claimCount').value);
+      let pages = parseInt(document.getElementById('pageCount').value);
+      let country = document.getElementById('countrySelect').value;
+
+      if (!pct || isNaN(claims) || isNaN(pages)) {
+        alert("Please provide all details");
+        return;
+      }
+
+      const filingFee = 800;
+      const extraClaims = claims > 10 ? (claims - 10) * 40 : 0;
+      const extraPages = pages > 30 ? (pages - 30) * 15 : 0;
+      const translation = 0.5 * 100; // demo
+      const serviceFee = 250;
+      const total = filingFee + extraClaims + extraPages + translation + serviceFee;
+
+      const tbody = document.querySelector("#resultsTable tbody");
+      tbody.innerHTML = `<tr>
+        <td>${country}</td>
+        <td>$${filingFee}</td>
+        <td>$${extraClaims}</td>
+        <td>$${extraPages}</td>
+        <td>$${translation}</td>
+        <td>$${serviceFee}</td>
+        <td><strong>$${total}</strong></td>
+      </tr>`;
+      document.getElementById("resultsTable").style.display = '';
+    }
+  </script>
+</body>
+</html>
