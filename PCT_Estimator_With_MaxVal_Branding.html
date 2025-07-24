@@ -4,37 +4,14 @@
 <head>
   <title>PCT National Phase Estimator</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 40px;
-    }
-    h1 {
-      color: #0A284B;
-    }
-    .container {
-      max-width: 1000px;
-      margin: auto;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 30px;
-    }
-    table, th, td {
-      border: 1px solid #ccc;
-    }
-    th, td {
-      padding: 12px;
-      text-align: center;
-    }
-    .btn {
-      padding: 10px 20px;
-      background-color: #0A284B;
-      color: white;
-      border: none;
-      margin-top: 20px;
-      cursor: pointer;
-    }
+    body { font-family: Arial, sans-serif; margin: 40px; }
+    h1 { color: #0A284B; }
+    .container { max-width: 1200px; margin: auto; }
+    table { width: 100%; border-collapse: collapse; margin-top: 30px; }
+    table, th, td { border: 1px solid #ccc; }
+    th, td { padding: 12px; text-align: center; }
+    .btn { padding: 10px 20px; background-color: #0A284B; color: white; border: none; margin-top: 20px; cursor: pointer; }
+    .form-row { margin-bottom: 10px; }
   </style>
 </head>
 <body>
@@ -42,18 +19,40 @@
     <img src="https://www.maxval.com/wp-content/uploads/2023/02/MaxVal-logo.png" alt="MaxVal Logo" height="60">
     <h1>PCT National Phase Estimator</h1>
 
-    <label>PCT Application Number: <input type="text" id="pctNumber"></label><br><br>
-    <label>Claim Count: <input type="number" id="claimCount"></label><br><br>
-    <label>Page Count: <input type="number" id="pageCount"></label><br><br>
-    <label>Select Country:
-      <select id="countrySelect">
-        <option>United States</option>
-        <option>China</option>
-        <option>India</option>
-        <option>Japan</option>
-      </select>
-    </label><br><br>
-
+    <div class="form-row">
+      <label>PCT Application Number: <input type="text" id="pctNumber" onchange="fetchWIPOData()"></label>
+    </div>
+    <div class="form-row">
+      <label>Filing Date: <input type="text" id="filingDate" readonly></label>
+      <label>Priority Date: <input type="text" id="priorityDate" readonly></label>
+      <label>Claim Count: <input type="number" id="claimCount" readonly></label>
+      <label>No. of Words: <input type="number" id="wordCount" readonly></label>
+    </div>
+    <div class="form-row">
+      <label>Page Count: <input type="number" id="pageCount"></label>
+    </div>
+    <div class="form-row">
+      <label>Select Countries:
+        <select id="countrySelect" multiple size="8" style="width:300px;">
+          <option>United States</option>
+          <option>China</option>
+          <option>India</option>
+          <option>Japan</option>
+          <option>Brazil</option>
+          <option>Germany</option>
+          <option>Canada</option>
+          <option>Mexico</option>
+          <option>Australia</option>
+          <option>Russia</option>
+          <option>South Korea</option>
+          <option>France</option>
+          <option>United Kingdom</option>
+          <option>Italy</option>
+          <option>Spain</option>
+          <option>South Africa</option>
+        </select>
+      </label>
+    </div>
     <button class="btn" onclick="estimateCost()">Estimate Cost</button>
 
     <table id="resultsTable" style="display:none;">
@@ -65,13 +64,32 @@
   </div>
 
   <script>
-    function estimateCost() {
-      let pct = document.getElementById('pctNumber').value.trim();
-      let claims = parseInt(document.getElementById('claimCount').value);
-      let pages = parseInt(document.getElementById('pageCount').value);
-      let country = document.getElementById('countrySelect').value;
+    function fetchWIPOData() {
+      const pct = document.getElementById('pctNumber').value;
+      if (!pct) return;
 
-      if (!pct || isNaN(claims) || isNaN(pages)) {
+      fetch('/fetch_pct_data', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pct_number: pct })
+      })
+      .then(res => res.json())
+      .then(data => {
+        document.getElementById('filingDate').value = data.filing_date;
+        document.getElementById('priorityDate').value = data.priority_date;
+        document.getElementById('claimCount').value = data.claim_count;
+        document.getElementById('wordCount').value = data.word_count;
+      });
+    }
+
+    function estimateCost() {
+      const claims = parseInt(document.getElementById('claimCount').value);
+      const pages = parseInt(document.getElementById('pageCount').value);
+      const words = parseInt(document.getElementById('wordCount').value);
+      const countrySelect = document.getElementById('countrySelect');
+      const countries = Array.from(countrySelect.selectedOptions).map(o => o.value);
+
+      if (!claims || !pages || !words || countries.length === 0) {
         alert("Please provide all details");
         return;
       }
@@ -79,20 +97,24 @@
       const filingFee = 800;
       const extraClaims = claims > 10 ? (claims - 10) * 40 : 0;
       const extraPages = pages > 30 ? (pages - 30) * 15 : 0;
-      const translation = 0.5 * 100; // demo
+      const translation = Math.ceil(words / 100) * 1.2;
       const serviceFee = 250;
       const total = filingFee + extraClaims + extraPages + translation + serviceFee;
 
       const tbody = document.querySelector("#resultsTable tbody");
-      tbody.innerHTML = `<tr>
-        <td>${country}</td>
-        <td>$${filingFee}</td>
-        <td>$${extraClaims}</td>
-        <td>$${extraPages}</td>
-        <td>$${translation}</td>
-        <td>$${serviceFee}</td>
-        <td><strong>$${total}</strong></td>
-      </tr>`;
+      tbody.innerHTML = "";
+      countries.forEach(country => {
+        tbody.innerHTML += `<tr>
+          <td>${country}</td>
+          <td>$${filingFee}</td>
+          <td>$${extraClaims}</td>
+          <td>$${extraPages}</td>
+          <td>$${translation}</td>
+          <td>$${serviceFee}</td>
+          <td><strong>$${filingFee + extraClaims + extraPages + translation + serviceFee}</strong></td>
+        </tr>`;
+      });
+
       document.getElementById("resultsTable").style.display = '';
     }
   </script>
